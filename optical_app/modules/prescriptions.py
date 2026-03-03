@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 from modules.database import get_supabase
 
-# ... (omitted)
+DB_FILE = "optical_store.db"  # kept for reference only
 
 def init_db():
     """No longer needed - tables are created directly in Supabase."""
@@ -48,16 +48,12 @@ def add_prescription(client_id, exam_date, expiration_date, professional, longe_
     sb = get_supabase()
     date_str = exam_date.strftime('%Y-%m-%d') if exam_date else None
     exp_str = expiration_date.strftime('%Y-%m-%d') if expiration_date else None
-
     sb.table('prescriptions').insert({
-        'client_id': client_id,
-        'exam_date': date_str, 'expiration_date': exp_str, 'professional': professional,
-        'od_sph': longe_data['od_sph'], 'od_cyl': longe_data['od_cyl'],
-        'od_axis': longe_data['od_axis'], 'od_dnp': longe_data['od_dnp'],
-        'od_height': longe_data['od_height'],
-        'oe_sph': longe_data['oe_sph'], 'oe_cyl': longe_data['oe_cyl'],
-        'oe_axis': longe_data['oe_axis'], 'oe_dnp': longe_data['oe_dnp'],
-        'oe_height': longe_data['oe_height'],
+        'client_id': client_id, 'exam_date': date_str, 'expiration_date': exp_str, 'professional': professional,
+        'od_sph': longe_data['od_sph'], 'od_cyl': longe_data['od_cyl'], 'od_axis': longe_data['od_axis'],
+        'od_dnp': longe_data['od_dnp'], 'od_height': longe_data['od_height'],
+        'oe_sph': longe_data['oe_sph'], 'oe_cyl': longe_data['oe_cyl'], 'oe_axis': longe_data['oe_axis'],
+        'oe_dnp': longe_data['oe_dnp'], 'oe_height': longe_data['oe_height'],
         'addition': addition,
         'od_perto_sph': perto_data['od_sph'], 'od_perto_cyl': perto_data['od_cyl'],
         'od_perto_axis': perto_data['od_axis'], 'od_perto_dnp': perto_data['od_dnp'],
@@ -71,16 +67,12 @@ def update_prescription(prescription_id, client_id, exam_date, expiration_date, 
     sb = get_supabase()
     date_str = exam_date.strftime('%Y-%m-%d') if exam_date else None
     exp_str = expiration_date.strftime('%Y-%m-%d') if expiration_date else None
-
     sb.table('prescriptions').update({
-        'client_id': client_id,
-        'exam_date': date_str, 'expiration_date': exp_str, 'professional': professional,
-        'od_sph': longe_data['od_sph'], 'od_cyl': longe_data['od_cyl'],
-        'od_axis': longe_data['od_axis'], 'od_dnp': longe_data['od_dnp'],
-        'od_height': longe_data['od_height'],
-        'oe_sph': longe_data['oe_sph'], 'oe_cyl': longe_data['oe_cyl'],
-        'oe_axis': longe_data['oe_axis'], 'oe_dnp': longe_data['oe_dnp'],
-        'oe_height': longe_data['oe_height'],
+        'client_id': client_id, 'exam_date': date_str, 'expiration_date': exp_str, 'professional': professional,
+        'od_sph': longe_data['od_sph'], 'od_cyl': longe_data['od_cyl'], 'od_axis': longe_data['od_axis'],
+        'od_dnp': longe_data['od_dnp'], 'od_height': longe_data['od_height'],
+        'oe_sph': longe_data['oe_sph'], 'oe_cyl': longe_data['oe_cyl'], 'oe_axis': longe_data['oe_axis'],
+        'oe_dnp': longe_data['oe_dnp'], 'oe_height': longe_data['oe_height'],
         'addition': addition,
         'od_perto_sph': perto_data['od_sph'], 'od_perto_cyl': perto_data['od_cyl'],
         'od_perto_axis': perto_data['od_axis'], 'od_perto_dnp': perto_data['od_dnp'],
@@ -88,7 +80,6 @@ def update_prescription(prescription_id, client_id, exam_date, expiration_date, 
         'oe_perto_axis': perto_data['oe_axis'], 'oe_perto_dnp': perto_data['oe_dnp'],
         'notes': notes
     }).eq('id', prescription_id).execute()
-
     if 'editing_prescription_id' in st.session_state:
         del st.session_state['editing_prescription_id']
     st.rerun()
@@ -101,11 +92,11 @@ def get_prescriptions(client_id):
 def get_all_prescriptions():
     """Get all prescriptions from all clients with client names"""
     sb = get_supabase()
-    # Supabase supports joins via select with foreign key notation
-    res = sb.table('prescriptions').select('*, clients(name)').order('expiration_date').execute()
+    res = sb.table('prescriptions').select('*, clients(name, store)').order('expiration_date').execute()
     df = pd.DataFrame(res.data)
     if not df.empty and 'clients' in df.columns:
         df['client_name'] = df['clients'].apply(lambda x: x['name'] if isinstance(x, dict) else '')
+        df['store'] = df['clients'].apply(lambda x: x.get('store', '') if isinstance(x, dict) else '')
         df.drop(columns=['clients'], inplace=True)
     return df
 

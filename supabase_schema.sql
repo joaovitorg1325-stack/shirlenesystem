@@ -1,9 +1,9 @@
 -- ============================================================
--- Schema SQL - Ótica Shirlene
+-- Schema SQL - Ótica Shirlene (Multi-Loja)
 -- Execute isso no Supabase SQL Editor (supabase.com → SQL Editor)
 -- ============================================================
 
--- Tabela de clientes
+-- Tabela de clientes (com campo loja)
 CREATE TABLE IF NOT EXISTS clients (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS clients (
     neighborhood TEXT,
     credit_balance REAL DEFAULT 0.0,
     notes TEXT,
+    store TEXT DEFAULT 'Loja 1',
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -42,23 +43,16 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     exam_date TEXT,
     expiration_date TEXT,
     professional TEXT,
-
-    -- Longe
     od_sph TEXT, od_cyl TEXT, od_axis TEXT, od_dnp TEXT, od_height TEXT,
     oe_sph TEXT, oe_cyl TEXT, oe_axis TEXT, oe_dnp TEXT, oe_height TEXT,
-
-    -- Adição
     addition TEXT,
-
-    -- Perto
     od_perto_sph TEXT, od_perto_cyl TEXT, od_perto_axis TEXT, od_perto_dnp TEXT,
     oe_perto_sph TEXT, oe_perto_cyl TEXT, oe_perto_axis TEXT, oe_perto_dnp TEXT,
-
     notes TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Permitir acesso público (necessário para o Streamlit funcionar com anon key)
+-- Habilitar segurança e permitir acesso com anon key
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE client_phones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE professionals ENABLE ROW LEVEL SECURITY;

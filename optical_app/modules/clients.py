@@ -9,18 +9,25 @@ def init_db():
     """No longer needed - tables are created directly in Supabase."""
     pass
 
+def _current_store():
+    """Returns the currently selected store, or None if 'Todas as Lojas'."""
+    store = st.session_state.get('current_store', 'Loja 1')
+    return None if store == "Todas as Lojas" else store
+
 def add_client(name, sex, phones_list, email, cpf, rg, birth_date, address, address_number, neighborhood, notes):
     sb = get_supabase()
+    store = st.session_state.get('current_store', 'Loja 1')
+    if store == "Todas as Lojas":
+        store = "Loja 1"  # Default when admin adds a client
     bdate_str = str(birth_date) if birth_date else None
 
     result = sb.table('clients').insert({
         'name': name, 'sex': sex, 'email': email, 'cpf': cpf, 'rg': rg,
         'birth_date': bdate_str, 'address': address, 'address_number': address_number,
-        'neighborhood': neighborhood, 'notes': notes
+        'neighborhood': neighborhood, 'notes': notes, 'store': store
     }).execute()
 
     client_id = result.data[0]['id']
-
     for phone in phones_list:
         if phone['number']:
             sb.table('client_phones').insert({
@@ -29,13 +36,18 @@ def add_client(name, sex, phones_list, email, cpf, rg, birth_date, address, addr
                 'complement': phone.get('complement', '')
             }).execute()
 
-    time.sleep(2)  # Wait for animation to complete
+    time.sleep(2)
     st.rerun()
-
 
 def get_clients():
     sb = get_supabase()
-    clients_res = sb.table('clients').select('*').order('created_at', desc=True).execute()
+    store = _current_store()
+
+    query = sb.table('clients').select('*').order('created_at', desc=True)
+    if store:
+        query = query.eq('store', store)
+    clients_res = query.execute()
+
     phones_res = sb.table('client_phones').select('client_id, number, complement').execute()
 
     df = pd.DataFrame(clients_res.data)
@@ -50,7 +62,6 @@ def get_clients():
         df['phone_display'] = df['display'].apply(lambda x: ", ".join(x) if isinstance(x, list) else "")
     else:
         df['phone_display'] = ""
-
     return df
 
 def get_client_phones(client_id):
@@ -61,14 +72,11 @@ def get_client_phones(client_id):
 def update_client(id, name, sex, phones_list, email, cpf, rg, birth_date, address, address_number, neighborhood, notes):
     sb = get_supabase()
     bdate_str = str(birth_date) if birth_date else None
-
     sb.table('clients').update({
         'name': name, 'sex': sex, 'email': email, 'cpf': cpf, 'rg': rg,
         'birth_date': bdate_str, 'address': address, 'address_number': address_number,
         'neighborhood': neighborhood, 'notes': notes
     }).eq('id', id).execute()
-
-    # Phones: delete and re-insert
     sb.table('client_phones').delete().eq('client_id', id).execute()
     for phone in phones_list:
         if phone['number']:
@@ -77,15 +85,15 @@ def update_client(id, name, sex, phones_list, email, cpf, rg, birth_date, addres
                 'number': phone['number'],
                 'complement': phone.get('complement', '')
             }).execute()
-
     st.rerun()
 
 def delete_client(id):
     sb = get_supabase()
-    # Phones deleted via ON DELETE CASCADE in Supabase
     sb.table('clients').delete().eq('id', id).execute()
     st.success("Cliente excluído com sucesso!")
     st.rerun()
+
+
 
 
 @st.dialog("Editar Cliente")

@@ -27,8 +27,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Sidebar Navigation
-st.sidebar.title("Navegação")
+# --- Store Selector ---
+st.sidebar.title("👓 Shirlene")
+stores = ["Loja 1", "Loja 2"]
+selected_store = st.sidebar.selectbox(
+    "🏪 Loja Ativa",
+    options=["Todas as Lojas"] + stores,
+    key="selected_store"
+)
+st.session_state.current_store = selected_store
+st.sidebar.divider()
+
+# --- Sidebar Navigation ---
 page = st.sidebar.radio("Ir para", ["Home", "Clientes", "📋 Receitas"])
 
 # --- Navigation State Cleanup ---
@@ -36,25 +46,24 @@ if 'last_page' not in st.session_state:
     st.session_state.last_page = page
 
 if st.session_state.last_page != page:
-    # Cleanup when changing pages
     keys_to_clear = [
-        'active_prescription_client', 
-        'new_prescription_expander_open', 
-        'edit_data', # Generic edit data holder? No, usually specific like edit_data_{id}
-        'editing_prescription_id' # If used
+        'active_prescription_client',
+        'new_prescription_expander_open',
+        'editing_prescription_id'
     ]
-    # Also clean dynamic keys if possible, but let's stick to known state variables
     for key in list(st.session_state.keys()):
         if key in keys_to_clear or key.startswith('editing_inline_') or key.startswith('edit_data_') or key.startswith('new_prof_'):
-             del st.session_state[key]
-    
+            del st.session_state[key]
     st.session_state.last_page = page
 
 
 if page == "Home":
     st.title("👓 Sistema de Gestão - Ótica Shirlene")
-    st.write("Bem-vindo ao sistema de gestão.")
-    st.info("Selecione uma opção no menu lateral para começar.")
+    if selected_store == "Todas as Lojas":
+        st.info("👀 Modo administrador — visualizando todas as lojas.")
+    else:
+        st.info(f"📍 Loja ativa: **{selected_store}**")
+    st.write("Selecione uma opção no menu lateral para começar.")
 
 elif page == "Clientes":
     from modules import clients
