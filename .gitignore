@@ -1,0 +1,23 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Temporary files
+.tmp/
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+
+# Database (local only - not for version control)
+*.db
+
+# Streamlit secrets (contains credentials - never commit!)
+.streamlit/secrets.toml
